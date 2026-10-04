@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "easysuppressions:portal_cutter_block",
+    "easysuppressions:light_suppressor_block"
+  ]
+}

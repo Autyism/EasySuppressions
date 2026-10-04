@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "easysuppressions:item/light_suppressor_selector"
+  }
+}

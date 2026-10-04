@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "easysuppressions:item/portal_pickaxe"
+  }
+}

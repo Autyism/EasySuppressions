@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "": {
+      "fabric:type": "easysuppressions:active_switch",
+      "inactive": {
+        "model": "easysuppressions:block/portal_cutter_block"
+      },
+      "active": {
+        "model": "easysuppressions:block/portal_cutter_block_active"
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "O": "minecraft:obsidian",
+    "S": "minecraft:nether_star",
+    "G": "minecraft:glowstone"
+  },
+  "pattern": [
+    "OSO",
+    "SGS",
+    "OSO"
+  ],
+  "result": {
+    "count": 1,
+    "id": "easysuppressions:light_suppressor_block"
+  }
+}

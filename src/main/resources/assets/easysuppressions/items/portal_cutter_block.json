@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "easysuppressions:block/portal_cutter_block"
+  }
+}

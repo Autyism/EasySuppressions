@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "easysuppressions:block/portal_cutter_block"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.autyism.easysuppressions.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AbstractBlockStateMixin",
+    "AnvilScreenHandlerMixin",
+    "ChunkLightProviderAccessor",
+    "ChunkLightProviderMixin",
+    "LightStorageAccessor",
+    "NetherPortalBlockMixin",
+    "ServerChunkLoadingManagerAccessor",
+    "ServerRecipeManagerMixin",
+    "ServerWorldMixin",
+    "SkyLightStorageDataAccessor",
+    "SlotMixin",
+    "WorldChunkMixin",
+    "WorldMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,9 @@
+.gradle/
+.idea/
+build/
+run/
+out/
+*.iml
+
+# local notes
+docs/HANDOVER.md

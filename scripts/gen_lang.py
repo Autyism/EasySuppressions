@@ -1,0 +1,116 @@
+"""Generates assets/easysuppressions/lang/{en_us,zh_cn}.json from one table (keeps both in sync)."""
+import json
+import os
+
+KEYS = {
+    "block.easysuppressions.portal_cutter_block": ("Portal Cutter Block", "切门方块"),
+    "block.easysuppressions.light_suppressor_block": ("Light Suppressor Block", "光抑方块"),
+    "item.easysuppressions.portal_cutter_selector": ("Portal Cutter Selector", "切门选区器"),
+    "item.easysuppressions.light_suppressor_selector": ("Light Suppressor Selector", "光抑选区器"),
+    "item.easysuppressions.portal_pickaxe": ("Portal Pickaxe", "传送门挖掘镐"),
+    "itemGroup.easysuppressions": ("Autyism's Easy Suppressions", "Autyism's Easy Suppressions"),
+
+    "easysuppressions.mode.none": ("Untouched", "不干预"),
+    "easysuppressions.mode.lock": ("Lock current", "锁定当前"),
+    "easysuppressions.mode.fixed": ("Fixed", "固定为"),
+
+    "easysuppressions.dimension.overworld": ("the Overworld", "主世界"),
+    "easysuppressions.dimension.the_nether": ("the Nether", "下界"),
+    "easysuppressions.dimension.the_end": ("the End", "末地"),
+
+    "easysuppressions.tooltip.no_selection": ("No selection yet", "还没有选区"),
+    "easysuppressions.tooltip.corner": ("Corner %s: %s", "点 %s：%s"),
+    "easysuppressions.tooltip.unset": ("not set", "未设置"),
+    "easysuppressions.tooltip.dimension": ("Dimension: %s", "维度：%s"),
+    "easysuppressions.tooltip.range": ("Zone: %s", "区域：%s"),
+    "easysuppressions.tooltip.size": ("Size: %s × %s × %s", "大小：%s × %s × %s"),
+    "easysuppressions.tooltip.selector_usage": ("Left click: corner 1 · Right click: corner 2 (block up to 64 away)", "左键设点 1 · 右键设点 2（准星 64 格内的方块）"),
+    "easysuppressions.tooltip.unbound": ("No zone bound (set it in the GUI or bind it on an anvil)", "未绑定区域（可在 GUI 里设置，或用铁砧绑定）"),
+    "easysuppressions.tooltip.bound": ("Bound zone", "已绑定区域"),
+    "easysuppressions.tooltip.portal_cutter_block": ("Powered: nether portal blocks in its zone ignore block updates", "通电时：区域内的下界传送门不会因方块更新碎掉"),
+    "easysuppressions.tooltip.light_suppressor_block": ("Locked: light queries in its zone return the set values", "锁定后：区域内的光照查询返回设定值"),
+    "easysuppressions.tooltip.portal_pickaxe": ("Mines nether portal blocks only, one at a time", "只能挖下界传送门方块，一次一格"),
+
+    "easysuppressions.message.needs_redstone": ("The light suppressor needs a redstone signal to open", "需要红石信号才能打开光抑方块"),
+    "easysuppressions.message.place_outside_zone": ("This block must be placed inside its bound zone", "这个方块必须放在它绑定的区域内"),
+    "easysuppressions.message.place_wrong_dimension": ("This block's zone is in %s", "这个方块绑定的区域在%s"),
+    "easysuppressions.message.corner_set": ("Corner %s set: %s", "已设置点 %s：%s"),
+    "easysuppressions.message.corner_dimension_reset": ("Other dimension: the old corners were cleared.", "不在同一维度，旧的点已清除。"),
+    "easysuppressions.message.selection_size": ("  (selection %s × %s × %s)", "（选区 %s × %s × %s）"),
+    "easysuppressions.message.zone_must_contain_block": ("The zone must contain the block itself", "区域必须包含方块本身"),
+    "easysuppressions.message.zone_saved": ("Zone saved: %s", "区域已保存：%s"),
+    "easysuppressions.message.import_no_selector": ("Hold a matching selector with both corners set (main or off hand)", "请在主手或副手拿着已设好两个点的同类选区器"),
+    "easysuppressions.message.import_wrong_kind": ("That selector is for the other block", "手里的选区器不是这种方块用的"),
+    "easysuppressions.message.import_wrong_dimension": ("The selection is in %s", "这个选区在%s"),
+    "easysuppressions.message.locked_readonly": ("Locked: unlock first to change the zone or settings", "已锁定：要先解除才能修改区域和设置"),
+    "easysuppressions.message.settings_saved": ("Settings saved", "设置已保存"),
+    "easysuppressions.message.no_zone": ("Set a zone first", "请先设置区域"),
+    "easysuppressions.message.nothing_to_lock": ("Both channels are \"Untouched\": nothing to lock", "两个通道都是“不干预”，没有东西可以锁定"),
+    "easysuppressions.message.overlap": ("Overlaps the locked zone of the light suppressor at %s", "与 %s 的光抑方块已锁定的区域重叠"),
+    "easysuppressions.message.locked": ("Locked", "已锁定"),
+    "easysuppressions.message.unlocked": ("Unlocked: real light is back", "已解除，恢复真实光照"),
+    "easysuppressions.message.all_recorded": ("Light suppressor zone fully recorded (block at %s, %s, %s)", "光抑区域已全部记录（方块 %s, %s, %s）"),
+    "easysuppressions.message.config_no_permission": ("Only operators can change Easy Suppressions settings", "只有 OP 能修改 Easy Suppressions 的设置"),
+    "easysuppressions.message.server_missing_mod": ("The server does not have Autyism's Easy Suppressions", "服务器没有安装 Autyism's Easy Suppressions"),
+
+    "easysuppressions.gui.status": ("Status: %s", "状态：%s"),
+    "easysuppressions.gui.cutter_active": ("Active (redstone signal)", "激活（有红石信号）"),
+    "easysuppressions.gui.cutter_inactive": ("Inactive (no redstone signal)", "未激活（无红石信号）"),
+    "easysuppressions.gui.locked": ("Locked", "已锁定"),
+    "easysuppressions.gui.unlocked": ("Not locked", "未锁定"),
+    "easysuppressions.gui.corner": ("Corner %s", "角 %s"),
+    "easysuppressions.gui.save_zone": ("Save zone", "保存区域"),
+    "easysuppressions.gui.import": ("Import held selector", "导入手持选区器的选区"),
+    "easysuppressions.gui.show_zone": ("Show zone", "显示选区"),
+    "easysuppressions.gui.bad_number": ("Please enter whole numbers", "请输入整数"),
+    "easysuppressions.gui.cutter_hint": ("Portal blocks in the zone are only protected while this block has a redstone signal. Keep it powered once the build is done.", "区域内的传送门只在方块有红石信号时受保护。建议建成后持续供给红石信号以保持保护。"),
+    "easysuppressions.gui.custom_mode": ("Custom mode", "自定义模式"),
+    "easysuppressions.gui.sky_light": ("Sky light", "天空光"),
+    "easysuppressions.gui.block_light": ("Block light", "方块光"),
+    "easysuppressions.gui.value": ("Value: %s", "数值：%s"),
+    "easysuppressions.gui.preset_simple": ("Simple mode", "简单模式"),
+    "easysuppressions.gui.preset_mob_farm": ("Mob farm", "刷怪平台"),
+    "easysuppressions.gui.preset_no_spawn": ("No spawning", "防刷怪"),
+    "easysuppressions.gui.preset_sky_only": ("Sky light only", "只抑天空光"),
+    "easysuppressions.gui.save_settings": ("Save settings", "保存设置"),
+    "easysuppressions.gui.lock": ("Lock…", "锁定…"),
+    "easysuppressions.gui.unlock": ("Unlock…", "解除…"),
+    "easysuppressions.gui.display": ("Display", "画面"),
+    "easysuppressions.gui.display_suppressed": ("Set light", "按设定值显示"),
+    "easysuppressions.gui.display_real": ("Real light", "显示真实光照"),
+    "easysuppressions.gui.pending": ("Chunks waiting to be recorded: %s / total %s", "待补记区块：%s / 总数 %s"),
+    "easysuppressions.gui.pending_nearest": ("Nearest (chunk x, z):", "最近的待补记区块（区块 x, z）："),
+    "easysuppressions.gui.suppressor_hint": ("Set the zone and both channels, then lock. The effect stays until you unlock or the block is removed; redstone only decides whether this GUI opens.", "设好区域和两个通道后锁定。锁定后一直生效，直到解除或方块被拆掉；红石信号只决定能不能打开这个界面。"),
+    "easysuppressions.gui.locked_hint": ("Locked: zone and channels are read-only.", "已锁定：区域和通道设置只读。"),
+    "easysuppressions.gui.confirm_lock_title": ("Lock this light suppressor zone?", "锁定这个光抑区域？"),
+    "easysuppressions.gui.confirm_lock": ("Zone %s\nSky light: %s · Block light: %s\n\"Lock current\" records the real light of every block right now; chunks that are not loaded are recorded when they load. The zone and settings stay read-only until you unlock.", "区域 %s\n天空光：%s · 方块光：%s\n“锁定当前”会逐格记录此刻的真实光照；未加载的区块在加载时补记。锁定后区域和设置只读，直到解除。"),
+    "easysuppressions.gui.confirm_unlock_title": ("Unlock this light suppressor zone?", "解除这个光抑区域？"),
+    "easysuppressions.gui.confirm_unlock": ("The zone goes back to real light at once and the recorded light is deleted.", "区域内立刻恢复真实光照，已记录的数据会被删除。"),
+
+    "easysuppressions.config.title": ("Autyism's Easy Suppressions", "Autyism's Easy Suppressions 设置"),
+    "easysuppressions.config.block_break": ("Block break time (survival)", "方块生存破坏时间"),
+    "easysuppressions.config.pickaxe": ("Portal pickaxe mining time", "传送门挖掘镐挖掘时间"),
+    "easysuppressions.config.seconds": ("seconds", "秒"),
+    "easysuppressions.config.save": ("Save", "保存"),
+    "easysuppressions.config.saved_local": ("Saved (used by singleplayer worlds)", "已保存（单人世界使用）"),
+    "easysuppressions.config.sent": ("Sent to the server", "已发送给服务器"),
+    "easysuppressions.config.where_local": ("Editing this game's settings (singleplayer worlds).", "正在编辑本机设置（单人世界生效）。"),
+    "easysuppressions.config.where_singleplayer": ("Singleplayer: changes apply at once.", "单人世界：修改立即生效。"),
+    "easysuppressions.config.where_server_op": ("On a server as operator: changes apply to everybody.", "服务器（你是 OP）：修改对所有人生效。"),
+    "easysuppressions.config.where_server_readonly": ("On a server: only operators can change these values.", "服务器：只有 OP 能修改这些数值。"),
+    "easysuppressions.config.current": ("In effect: break %s s · portal pickaxe %s s", "当前生效：破坏 %s 秒 · 挖掘镐 %s 秒"),
+
+    "easysuppressions.command.zone_cutter": ("[Portal cutter] %s %s  block %s", "[切门] %s %s  方块 %s"),
+    "easysuppressions.command.zone_light": ("[Light suppressor] %s %s  block %s  sky: %s  block light: %s  recorded chunks %s/%s", "[光抑] %s %s  方块 %s  天空光：%s  方块光：%s  已记录区块 %s/%s"),
+    "easysuppressions.command.zone_count": ("%s zone(s) registered", "共 %s 个登记区域"),
+    "easysuppressions.command.config": ("Block break time: %s s, portal pickaxe: %s s", "方块破坏时间：%s 秒，挖掘镐：%s 秒"),
+}
+
+here = os.path.dirname(os.path.abspath(__file__))
+out = os.path.join(here, "..", "src", "main", "resources", "assets", "easysuppressions", "lang")
+os.makedirs(out, exist_ok=True)
+for index, name in ((0, "en_us"), (1, "zh_cn")):
+    with open(os.path.join(out, name + ".json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump({k: v[index] for k, v in KEYS.items()}, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+print(len(KEYS), "keys")
