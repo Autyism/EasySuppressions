@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/icon.png" width="128" alt="icon"></p>
+<p align="center"><img src="docs/icon_transparent.png" width="128" alt="icon"></p>
 
 <h1 align="center">Autyism's Easy Suppressions</h1>
 
