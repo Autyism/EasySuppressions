@@ -11,6 +11,8 @@
     "LightStorageAccessor",
     "NetherPortalBlockMixin",
     "ServerChunkLoadingManagerAccessor",
+    "ServerCommonNetworkHandlerMixin",
+    "ServerPlayNetworkHandlerMixin",
     "ServerRecipeManagerMixin",
     "ServerWorldMixin",
     "SkyLightStorageDataAccessor",

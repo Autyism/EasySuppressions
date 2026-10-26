@@ -87,6 +87,16 @@ KEYS = {
     "easysuppressions.gui.confirm_unlock_title": ("Unlock this light suppressor zone?", "解除这个光抑区域？"),
     "easysuppressions.gui.confirm_unlock": ("The zone goes back to real light at once and the recorded light is deleted.", "区域内立刻恢复真实光照，已记录的数据会被删除。"),
 
+    "easysuppressions.vanilla.selector_hint": ("Without the mod: hold a selector and left click a block for corner 1, right click for corner 2 (up to 64 blocks away). While you hold it, your selection and the zones nearby show as particles.", "没装模组时：拿着选区器左键方块设点 1，右键设点 2（64 格内）。拿着选区器时，选区和附近的区域会用粒子显示。"),
+    "easysuppressions.vanilla.corner_input": ("Corner %s (x y z, ~ = where you stand)", "角 %s（x y z，~ 表示你的位置）"),
+    "easysuppressions.vanilla.bad_corner": ("Each corner needs three whole numbers: x y z (~ and ~5 work too)", "每个角要三个整数：x y z（也可以写 ~ 或 ~5）"),
+    "easysuppressions.vanilla.zone_none": ("Zone: not set", "区域：未设置"),
+    "easysuppressions.vanilla.fixed_value": ("value for \"Fixed\"", "“固定为”的数值"),
+    "easysuppressions.vanilla.zone_shown": ("Showing the zone for 15 seconds", "显示区域 15 秒"),
+    "easysuppressions.vanilla.yes": ("Yes", "确定"),
+    "easysuppressions.vanilla.cancel": ("Cancel", "取消"),
+    "easysuppressions.vanilla.close": ("Close", "关闭"),
+
     "easysuppressions.config.title": ("Autyism's Easy Suppressions", "Autyism's Easy Suppressions 设置"),
     "easysuppressions.config.block_break": ("Block break time (survival)", "方块生存破坏时间"),
     "easysuppressions.config.pickaxe": ("Portal pickaxe mining time", "传送门挖掘镐挖掘时间"),

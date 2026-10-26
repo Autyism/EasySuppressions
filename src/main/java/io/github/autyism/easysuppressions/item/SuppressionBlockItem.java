@@ -2,9 +2,12 @@ package io.github.autyism.easysuppressions.item;
 
 import io.github.autyism.easysuppressions.ModContent;
 import io.github.autyism.easysuppressions.SuppressorKind;
+import io.github.autyism.easysuppressions.vanilla.EsPolymerItem;
+import io.github.autyism.easysuppressions.vanilla.StandIns;
 import net.minecraft.block.Block;
 import net.minecraft.component.type.TooltipDisplayComponent;
 import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
@@ -17,7 +20,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.function.Consumer;
 
 /** Block item that may carry a bound zone; refuses to be placed outside that zone. */
-public class SuppressionBlockItem extends BlockItem {
+public class SuppressionBlockItem extends BlockItem implements EsPolymerItem {
 	private final SuppressorKind kind;
 
 	public SuppressionBlockItem(Block block, SuppressorKind kind, Settings settings) {
@@ -27,6 +30,11 @@ public class SuppressionBlockItem extends BlockItem {
 
 	public SuppressorKind kind() {
 		return kind;
+	}
+
+	@Override
+	public Item standIn() {
+		return StandIns.blockItem(kind);
 	}
 
 	@Override

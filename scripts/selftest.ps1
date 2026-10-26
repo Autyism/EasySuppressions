@@ -41,6 +41,11 @@ if (Test-Path $log) { Remove-Item $log -Force }
 $crashesBefore = @(Get-ChildItem $crashDir -Filter '*.txt' -ErrorAction SilentlyContinue).Count
 
 $gradleArgs = @('runClient', '--console=plain', '"-Des.selftest=true"', "`"-Des.scenarios=$Scenarios`"")
+# The quiet test client keeps the game off screen and muted while somebody uses the PC (copied into
+# the dev run's mods folder, removed again at the end)
+$quiet = 'D:\Dev\Projects\Minecraft\release-work\quiet\1.21.11\quiet-test-client.jar'
+$quietCopy = Join-Path $root 'run\mods\quiet-test-client.jar'
+if (Test-Path $quiet) { New-Item -ItemType Directory -Force (Split-Path $quietCopy) | Out-Null; Copy-Item $quiet $quietCopy -Force }
 if ($Sodium) { $gradleArgs += '-Pwith_sodium=true' }
 if ($Expect) { $gradleArgs += "`"-Des.expect=$Expect`"" }
 if ($Connect) { $gradleArgs += "`"-Des.connect=$Connect`""; $gradleArgs += '"-Des.username=EsTester"' }
@@ -68,6 +73,7 @@ Get-GameProcess | ForEach-Object { Stop-Process -Id $_.ProcessId -Force; $killed
 Start-Sleep -Seconds 2
 $stillRunning = @(Get-GameProcess).Count
 
+Remove-Item $quietCopy -ErrorAction SilentlyContinue
 Write-Output "[selftest.ps1] outcome: $outcome"
 if (Test-Path $log) {
 	Select-String -Path $log -Pattern '\[SelfTest\]' -CaseSensitive | ForEach-Object { $_.Line }

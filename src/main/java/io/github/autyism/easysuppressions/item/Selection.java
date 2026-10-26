@@ -2,6 +2,8 @@ package io.github.autyism.easysuppressions.item;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import eu.pb4.polymer.core.api.other.PolymerComponent;
+import io.github.autyism.easysuppressions.vanilla.EsClients;
 import io.github.autyism.easysuppressions.zone.Zone;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.PacketCodec;
@@ -14,7 +16,13 @@ import net.minecraft.world.World;
 import java.util.Optional;
 
 /** The two corners stored on a selector item. Both corners are always in {@link #dimension}. */
-public record Selection(RegistryKey<World> dimension, Optional<BlockPos> pos1, Optional<BlockPos> pos2) {
+public record Selection(RegistryKey<World> dimension, Optional<BlockPos> pos1, Optional<BlockPos> pos2) implements PolymerComponent {
+	/** Only clients with the mod know this component. */
+	@Override
+	public boolean canSyncRawToClient(xyz.nucleoid.packettweaker.PacketContext context) {
+		return EsClients.has(context);
+	}
+
 	public static final Codec<Selection> CODEC = RecordCodecBuilder.create(i -> i.group(
 			World.CODEC.fieldOf("dimension").forGetter(Selection::dimension),
 			BlockPos.CODEC.optionalFieldOf("pos1").forGetter(Selection::pos1),

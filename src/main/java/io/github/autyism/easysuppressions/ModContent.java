@@ -1,5 +1,8 @@
 package io.github.autyism.easysuppressions;
 
+import eu.pb4.polymer.core.api.block.PolymerBlockUtils;
+import eu.pb4.polymer.core.api.other.PolymerComponent;
+import eu.pb4.polymer.core.api.utils.PolymerSyncedObject;
 import io.github.autyism.easysuppressions.block.LightSuppressorBlock;
 import io.github.autyism.easysuppressions.block.LightSuppressorBlockEntity;
 import io.github.autyism.easysuppressions.block.PortalCutterBlock;
@@ -9,6 +12,7 @@ import io.github.autyism.easysuppressions.item.PortalPickaxeItem;
 import io.github.autyism.easysuppressions.item.Selection;
 import io.github.autyism.easysuppressions.item.SelectorItem;
 import io.github.autyism.easysuppressions.item.SuppressionBlockItem;
+import io.github.autyism.easysuppressions.vanilla.EsClients;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.block.AbstractBlock;
@@ -27,6 +31,8 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.text.Text;
 import net.minecraft.util.Rarity;
+
+import xyz.nucleoid.packettweaker.PacketContext;
 
 import java.util.function.Function;
 
@@ -77,7 +83,26 @@ public final class ModContent {
 	}
 
 	public static void init() {
-		// Class loading registers everything above.
+		// Class loading registers everything above. Players without the mod get stand-ins for the blocks
+		// and items (they implement Polymer's interfaces); the block entities and components are not sent
+		// to them at all.
+		PolymerBlockUtils.registerBlockEntity(PORTAL_CUTTER_BLOCK_ENTITY, onlyForModdedClients());
+		PolymerBlockUtils.registerBlockEntity(LIGHT_SUPPRESSOR_BLOCK_ENTITY, onlyForModdedClients());
+		PolymerComponent.registerDataComponent(SELECTION, BOUND_ZONE);
+	}
+
+	private static PolymerSyncedObject<BlockEntityType<?>> onlyForModdedClients() {
+		return new PolymerSyncedObject<>() {
+			@Override
+			public BlockEntityType<?> getPolymerReplacement(BlockEntityType<?> type, PacketContext context) {
+				return EsClients.has(context) ? type : null;
+			}
+
+			@Override
+			public boolean canSyncRawToClient(PacketContext context) {
+				return EsClients.has(context);
+			}
+		};
 	}
 
 	public static Item blockItem(SuppressorKind kind) {

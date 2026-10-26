@@ -3,7 +3,7 @@
 <h1 align="center">Autyism's Easy Suppressions</h1>
 
 <p align="center">
-Minecraft Java 1.21.11 · Fabric · server + client<br>
+Minecraft Java 1.21.11 · Fabric · server (client optional)<br>
 <a href="#中文">中文</a> · <a href="#english">English</a>
 </p>
 
@@ -16,7 +16,7 @@ Minecraft Java 1.21.11 · Fabric · server + client<br>
 - **切门方块**：通红石时，区域里的下界传送门不会因为方块更新碎掉，可以用**传送门挖掘镐**一格一格地挖，挖出任意形状。断电后恢复原版规则。
 - **光抑方块**：锁定后，游戏在区域里查询光照时直接得到设定值（锁定当时的真实值，或固定为 0~15）。刷怪判定、作物、冰雪融化、阳光探测器、亡灵燃烧……全部按设定值算。光照引擎和光照数据本身一点不改。
 
-服务端和客户端都要装。没装的客户端进服时会看到一句清楚的提示，不会莫名其妙地断开。
+装在服务端就行，客户端可装可不装（见下面“没装模组的玩家”）。装了的话版本要和服务端一样，不一样时进服会看到一句清楚的提示。
 
 ### 内容
 
@@ -33,6 +33,16 @@ Minecraft Java 1.21.11 · Fabric · server + client<br>
 - 爆炸、凋灵、末影龙都破坏不了；活塞推不动也拉不动。
 - 可以被任何常规红石方式充能，但**只进不出**：不导电，比较器读不出东西；激活状态存在方块实体里，侦测器完全没反应。
 - 激活时会换成发光的动画贴图（贴图带 LabPBR 法线和高光，开光影更好看）。
+
+### 没装模组的玩家
+
+原版客户端（包括没装 Fabric 的）也能进服、用这两种方块：
+
+- 方块和物品显示成原版的替身：切门方块是紫色带釉陶瓦，光抑方块是橙色带釉陶瓦，选区器是紫水晶碎片 / 烈焰棒，挖掘镐是金镐；名字和说明照常显示（中文或英文，跟着客户端语言）。
+- 右键方块打开服务器发来的对话框，功能和模组界面一样（输入坐标、导入选区器、光抑通道和预设、锁定 / 解除）。
+- 选区器：左键设点 1，右键设点 2；拿着选区器时，选区和附近的区域用粒子画出来。
+- 传送门挖掘镐照常能挖传送门（由服务端来挖）。
+- 光抑只改游戏判定，原版客户端画面上看到的还是真实光照。
 
 ### 配方
 
@@ -68,7 +78,7 @@ Minecraft Java 1.21.11 · Fabric · server + client<br>
 
 ### 许可证
 
-GPL-3.0-only
+GPL-3.0-only。内置 [Polymer](https://github.com/Patbox/polymer)（LGPL-3.0），用来给没装模组的玩家显示替身方块和物品。
 
 ---
 
@@ -79,7 +89,7 @@ On 1.21.11, cutting nether portals or suppressing light usually means building a
 - **Portal Cutter Block**: while powered, nether portal blocks inside its zone ignore block updates, so you can carve them one block at a time with the **Portal Pickaxe**, into any shape. Without power, vanilla rules apply again.
 - **Light Suppressor Block**: once locked, every light query inside its zone returns the value you set (the real value at the moment of locking, or a fixed 0–15). Mob spawning, crops, ice melting, daylight detectors, burning undead… all see the set value. The light engine and light data are never touched.
 
-Needed on both server and client. A client without the mod gets a clear message when it tries to join instead of a confusing disconnect.
+Install it on the server; on clients it is optional (see "Players without the mod" below). A client that has it needs the server's version, and gets a clear message when it does not.
 
 ### Content
 
@@ -96,6 +106,16 @@ Both blocks:
 - Explosions, withers and the ender dragon cannot destroy them; pistons cannot push or pull them.
 - Any normal redstone source powers them, but power only goes **in**: they do not conduct and comparators read nothing. The active state lives in the block entity, so observers never notice it.
 - When active they switch to an animated, glowing texture (with LabPBR normal and specular maps for shader packs).
+
+### Players without the mod
+
+Vanilla clients (even without Fabric) can join and use both blocks:
+
+- Blocks and items show as vanilla stand-ins: the Portal Cutter Block is purple glazed terracotta, the Light Suppressor Block orange glazed terracotta, the selectors an amethyst shard / blaze rod, the pickaxe a golden pickaxe. Names and tooltips still show (Chinese or English, following the client's language).
+- Right click a block for a dialog sent by the server, with the same functions as the mod's GUI (typed corners, selector import, light channels and presets, lock / unlock).
+- Selectors: left click sets corner 1, right click corner 2; while one is held, the selection and nearby zones are drawn with particles.
+- The Portal Pickaxe mines portal blocks as usual (the server does the mining).
+- The light suppressor changes the game's light checks only; a vanilla client still draws the real light.
 
 ### Recipes
 
@@ -131,4 +151,4 @@ Tested on 1.21.11, Fabric Loader 0.19.5 and Fabric API 0.141.6, with Carpet (plu
 
 ### License
 
-GPL-3.0-only
+GPL-3.0-only. Bundles [Polymer](https://github.com/Patbox/polymer) (LGPL-3.0) to show stand-in blocks and items to players without the mod.

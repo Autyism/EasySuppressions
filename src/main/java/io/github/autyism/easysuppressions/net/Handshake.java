@@ -13,12 +13,13 @@ import net.minecraft.util.Identifier;
 import java.util.function.Consumer;
 
 /**
- * Turns away clients that do not have the mod, or have another version, while they log in.
- * The texts are built on the server and sent as plain text, because a client without the mod has
- * no translations for them; they are written in Chinese and English.
+ * Turns away clients that have another version of the mod while they log in. Clients without the
+ * mod may join: they get vanilla stand-ins (see the vanilla package).
+ * The texts are built on the server and sent as plain text, because the client of another version
+ * may lack them; they are written in Chinese and English.
  *
  * <p>The check runs in an early phase of BEFORE_CONFIGURE, ahead of Fabric's registry sync, so a
- * client without the mod sees this message instead of a generic "missing registry entries" one.
+ * client with another version sees this message instead of a generic "missing registry entries" one.
  */
 public final class Handshake {
 	private static final Identifier EARLY = EasySuppressions.id("handshake");
@@ -30,8 +31,8 @@ public final class Handshake {
 		ServerConfigurationConnectionEvents.BEFORE_CONFIGURE.addPhaseOrdering(EARLY, Event.DEFAULT_PHASE);
 		ServerConfigurationConnectionEvents.BEFORE_CONFIGURE.register(EARLY, (handler, server) -> {
 			if (!ServerConfigurationNetworking.canSend(handler, Payloads.Hello.ID)) {
-				EasySuppressions.LOGGER.info("Refusing a client without {} ({})", EasySuppressions.NAME, handler.getDebugProfile().name());
-				handler.disconnect(missingModText());
+				// Without the mod: vanilla stand-ins and server-side dialogs (see the vanilla package)
+				EasySuppressions.LOGGER.info("{} joins without {}", handler.getDebugProfile().name(), EasySuppressions.NAME);
 				return;
 			}
 			handler.addTask(new VersionTask());
@@ -48,21 +49,12 @@ public final class Handshake {
 		});
 	}
 
-	public static Text missingModText() {
-		String v = EasySuppressions.version();
-		return Text.literal("").append(Text.literal(EasySuppressions.NAME + "\n\n").formatted(Formatting.GOLD, Formatting.BOLD))
-				.append(Text.literal("此服务器需要安装模组 " + EasySuppressions.NAME + "（版本 " + v + "）才能进入。\n"
-						+ "请把与服务器相同版本的模组放进客户端的 mods 文件夹后再连接。\n\n"))
-				.append(Text.literal("This server requires the mod " + EasySuppressions.NAME + " (version " + v + ").\n"
-						+ "Install the same version on your client to join.").formatted(Formatting.GRAY));
-	}
-
 	public static Text versionMismatchText(String server, String client) {
 		return Text.literal("").append(Text.literal(EasySuppressions.NAME + "\n\n").formatted(Formatting.GOLD, Formatting.BOLD))
 				.append(Text.literal("模组版本不一致：服务端是 " + server + "，你的客户端是 " + client + "。\n"
-						+ "请安装与服务端相同的版本后再连接。\n\n"))
+						+ "请安装与服务端相同的版本后再连接，或者把这个模组移除（不装也能进）。\n\n"))
 				.append(Text.literal("Mod version mismatch: the server has " + server + ", your client has " + client + ".\n"
-						+ "Install the server's version to join.").formatted(Formatting.GRAY));
+						+ "Install the server's version, or remove the mod (it is optional), to join.").formatted(Formatting.GRAY));
 	}
 
 	private record VersionTask() implements ServerPlayerConfigurationTask {

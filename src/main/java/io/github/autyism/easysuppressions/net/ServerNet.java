@@ -13,6 +13,7 @@ import io.github.autyism.easysuppressions.item.Tooltips;
 import io.github.autyism.easysuppressions.light.ColumnData;
 import io.github.autyism.easysuppressions.light.LightSettings;
 import io.github.autyism.easysuppressions.light.LightZone;
+import io.github.autyism.easysuppressions.vanilla.VanillaScreens;
 import io.github.autyism.easysuppressions.world.EsWorldState;
 import io.github.autyism.easysuppressions.world.ServerZones;
 import io.github.autyism.easysuppressions.world.WorldZones;
@@ -251,12 +252,17 @@ public final class ServerNet {
 	// ------------------------------------------------------------------ selector
 
 	private static void onSelectorCorner(ServerPlayerEntity player, Payloads.SelectorCorner payload) {
+		setCorner(player, payload.index(), payload.pos());
+	}
+
+	/** Sets a corner of the selector in the main hand (from the mod's packet, or the server's own reading of a vanilla client's click). */
+	public static void setCorner(ServerPlayerEntity player, int index, BlockPos pos) {
+		Payloads.SelectorCorner payload = new Payloads.SelectorCorner(index, pos);
 		ItemStack stack = player.getMainHandStack();
 		if (!(stack.getItem() instanceof SelectorItem) || (payload.index() != 1 && payload.index() != 2)) {
 			return;
 		}
 		ServerWorld world = player.getEntityWorld();
-		BlockPos pos = payload.pos();
 		double max = SELECTOR_RANGE + 4.0;
 		if (player.getEyePos().squaredDistanceTo(Vec3d.ofCenter(pos)) > max * max || !world.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)) {
 			return;
@@ -307,10 +313,21 @@ public final class ServerNet {
 	public static void openScreen(ServerPlayerEntity player, SuppressionBlockEntity be) {
 		if (canSend(player)) {
 			ServerPlayNetworking.send(player, new Payloads.Screen(screenData(be), true));
+		} else {
+			VanillaScreens.open(player, be);
 		}
 	}
 
-	private static SuppressionBlockEntity reachable(ServerPlayerEntity player, BlockPos pos) {
+	/** Shows the block's current state again after an action: the mod's screen, or the dialog. */
+	private static void refresh(ServerPlayerEntity player, SuppressionBlockEntity be) {
+		if (canSend(player)) {
+			ServerPlayNetworking.send(player, new Payloads.Screen(screenData(be), false));
+		} else {
+			VanillaScreens.open(player, be);
+		}
+	}
+
+	public static SuppressionBlockEntity reachable(ServerPlayerEntity player, BlockPos pos) {
 		if (!player.canInteractWithBlockAt(pos, 4.0) || !player.getEntityWorld().isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)) {
 			return null;
 		}
@@ -325,10 +342,19 @@ public final class ServerNet {
 	}
 
 	private static void message(ServerPlayerEntity player, BlockPos pos, Text text, boolean error) {
-		ServerPlayNetworking.send(player, new Payloads.ScreenMessage(pos, text, error));
+		if (canSend(player)) {
+			ServerPlayNetworking.send(player, new Payloads.ScreenMessage(pos, text, error));
+		} else {
+			VanillaScreens.note(player, pos, text, error);
+		}
 	}
 
 	private static void onScreenAction(ServerPlayerEntity player, Payloads.ScreenAction action) {
+		handleAction(player, action);
+	}
+
+	/** One action of the block GUI, from the mod's screen or from the vanilla dialog. */
+	public static void handleAction(ServerPlayerEntity player, Payloads.ScreenAction action) {
 		BlockPos pos = action.pos();
 		SuppressionBlockEntity be = reachable(player, pos);
 		if (be == null) {
@@ -337,7 +363,7 @@ public final class ServerNet {
 		ServerWorld world = player.getEntityWorld();
 		if (be instanceof LightSuppressorBlockEntity && !world.isReceivingRedstonePower(pos)) {
 			message(player, pos, Text.translatable("easysuppressions.message.needs_redstone"), true);
-			ServerPlayNetworking.send(player, new Payloads.Screen(screenData(be), false));
+			refresh(player, be);
 			return;
 		}
 		switch (action.action()) {
@@ -365,7 +391,7 @@ public final class ServerNet {
 				}
 			}
 		}
-		ServerPlayNetworking.send(player, new Payloads.Screen(screenData(be), false));
+		refresh(player, be);
 	}
 
 	private static boolean checkZone(ServerPlayerEntity player, SuppressionBlockEntity be, Zone zone) {

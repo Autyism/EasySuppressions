@@ -6,6 +6,7 @@ import io.github.autyism.easysuppressions.item.PortalPickaxeItem;
 import io.github.autyism.easysuppressions.item.SelectorItem;
 import io.github.autyism.easysuppressions.net.Handshake;
 import io.github.autyism.easysuppressions.net.ServerNet;
+import io.github.autyism.easysuppressions.vanilla.VanillaSupport;
 import io.github.autyism.easysuppressions.world.ServerZones;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -43,6 +44,7 @@ public class EasySuppressions implements ModInitializer {
 		ServerNet.registerPayloads();
 		ServerNet.init();
 		Handshake.init();
+		VanillaSupport.init();
 		ServerZones.init();
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> EsCommand.register(dispatcher));
 

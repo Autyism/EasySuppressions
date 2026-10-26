@@ -11,6 +11,8 @@ base {
 
 repositories {
 	maven { url "https://maven.terraformersmc.com/releases/" }
+	// Polymer: lets players without the mod join and see stand-in blocks and items
+	maven { url "https://maven.nucleoid.xyz/" }
 	exclusiveContent {
 		forRepository { maven { url "https://api.modrinth.com/maven" } }
 		filter { includeGroup "maven.modrinth" }
@@ -54,6 +56,13 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// Bundled: players without the mod see vanilla stand-ins; players with it keep the real blocks and items.
+	modImplementation include("eu.pb4:polymer-core:${project.polymer_version}")
+	include "eu.pb4:polymer-common:${project.polymer_version}"
+	include "eu.pb4:polymer-networking:${project.polymer_version}"
+	include "eu.pb4:polymer-reg-sync-manipulator:${project.polymer_version}"
+	include "xyz.nucleoid:packet-tweaker:${project.packet_tweaker_version}"
 
 	// Optional for players: a settings button in the mod list.
 	modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
