@@ -3,7 +3,7 @@
   "id": "easysuppressions",
   "version": "${version}",
   "name": "Autyism's Easy Suppressions",
-  "description": "Portal cutting and light suppression for technical survival servers on 1.21.11, without real update suppression: a portal cutter block keeps nether portal blocks in its zone from breaking, and a light suppressor block makes every light query in its zone return a locked or fixed value. Needed on the server; optional on clients (players without it get vanilla stand-ins and server-side dialogs).",
+  "description": "Portal cutting and light suppression for technical survival servers on 1.21.11, without real update suppression: a portal cutter block keeps nether portal blocks in its zone from breaking, and a light suppressor block makes every light query in its zone return a locked or fixed value. Needed on the server; optional on clients (players without it get vanilla stand-ins and chest screens from the server).",
   "authors": ["Autyism"],
   "contact": {
     "homepage": "https://github.com/Autyism/EasySuppressions",

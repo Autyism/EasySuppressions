@@ -4,8 +4,8 @@
 
 The client mod is optional now. / 客户端可以不装了。
 
-- Players without the mod (vanilla clients too) can join, see the blocks and items as vanilla stand-ins and use them: block dialogs, selectors with particle outlines, the portal pickaxe.
-  没装模组的玩家（包括原版客户端）也能进服：方块和物品显示成原版替身，右键方块是对话框界面，选区器用粒子显示选区，传送门挖掘镐照常能用。
+- Players without the mod (vanilla clients too) can join, see the blocks and items as vanilla stand-ins and use them: block GUIs as chest screens, selectors with particle outlines, the portal pickaxe.
+  没装模组的玩家（包括原版客户端）也能进服：方块和物品显示成原版替身，右键方块是箱子界面（物品按钮，铁砧输入坐标），选区器用粒子显示选区，传送门挖掘镐照常能用。
 - Messages and item names reach them in their language (Chinese or English).
   提示和物品名字按他们的客户端语言显示（中文或英文）。
 - Players with the mod see and use everything as before; the versions still have to match.

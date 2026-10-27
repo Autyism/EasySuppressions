@@ -14,28 +14,17 @@ import io.github.autyism.easysuppressions.net.Payloads;
 import io.github.autyism.easysuppressions.net.ServerNet;
 import io.github.autyism.easysuppressions.zone.Zone;
 import it.unimi.dsi.fastutil.longs.LongList;
-import net.minecraft.dialog.AfterAction;
-import net.minecraft.dialog.DialogActionButtonData;
-import net.minecraft.dialog.DialogButtonData;
-import net.minecraft.dialog.DialogCommonData;
-import net.minecraft.dialog.action.DialogAction;
-import net.minecraft.dialog.action.DynamicCustomDialogAction;
-import net.minecraft.dialog.action.SimpleDialogAction;
-import net.minecraft.dialog.body.DialogBody;
-import net.minecraft.dialog.body.PlainMessageDialogBody;
-import net.minecraft.dialog.input.NumberRangeInputControl;
-import net.minecraft.dialog.input.SingleOptionInputControl;
-import net.minecraft.dialog.input.TextInputControl;
-import net.minecraft.dialog.type.ConfirmationDialog;
-import net.minecraft.dialog.type.Dialog;
-import net.minecraft.dialog.type.DialogInput;
-import net.minecraft.dialog.type.MultiActionDialog;
+import eu.pb4.sgui.api.ClickType;
+import eu.pb4.sgui.api.elements.GuiElementBuilder;
+import eu.pb4.sgui.api.gui.AnvilInputGui;
+import eu.pb4.sgui.api.gui.SimpleGui;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -44,7 +33,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,13 +40,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * The block GUIs for players without the mod, as dialogs (any 1.21.6+ client shows them). Same
- * actions as the mod's screens, carried out by the same server code (ServerNet.handleAction), which
- * checks reach, redstone and the lock again for every one of them.
+ * The block GUIs for players without the mod, as chest screens the server shows (item buttons; an anvil
+ * for typing a corner). Same actions as the mod's screens, carried out by the same server code
+ * (ServerNet.handleAction), which checks reach, redstone and the lock again for every one of them.
  */
 public final class VanillaScreens {
 	public static final Identifier ACTION = EasySuppressions.id("gui");
-	private static final int WIDTH = 310;
 
 	/** What the player typed but has not saved yet, and the result of the last action. */
 	private record Draft(BlockPos pos, @Nullable String corner1, @Nullable String corner2, @Nullable LightSettings settings,
@@ -77,7 +64,7 @@ public final class VanillaScreens {
 		DRAFTS.remove(player.getUuid());
 	}
 
-	/** A message from the last action, shown at the top of the dialog when it opens again. */
+	/** A message from the last action, shown at the top of the screen when it opens again. */
 	public static void note(ServerPlayerEntity player, BlockPos pos, Text text, boolean error) {
 		Draft draft = draft(player, pos);
 		DRAFTS.put(player.getUuid(), draft.withMessage(EsLang.translate(text, EsClients.language(player)), error));
@@ -92,40 +79,46 @@ public final class VanillaScreens {
 		Draft draft = draft(player, be.getPos());
 		// the message is shown once
 		DRAFTS.put(player.getUuid(), draft.withMessage(null, false));
-		Dialog dialog = be instanceof LightSuppressorBlockEntity light ? suppressor(player, light, draft) : cutter(player, be, draft);
-		player.openDialog(RegistryEntry.of(dialog));
+		if (be instanceof LightSuppressorBlockEntity light) suppressor(player, light, draft);
+		else cutter(player, be, draft);
 	}
 
-	// ------------------------------------------------------------------ dialogs
+	// ------------------------------------------------------------------ screens
 
-	private static Dialog cutter(ServerPlayerEntity player, SuppressionBlockEntity be, Draft draft) {
-		List<DialogBody> body = new ArrayList<>();
-		message(player, body, draft);
-		body.add(line(EsLang.get(player, "easysuppressions.gui.status",
+	private static void cutter(ServerPlayerEntity player, SuppressionBlockEntity be, Draft draft) {
+		BlockPos pos = be.getPos();
+		SimpleGui gui = chest(player, 3, EsLang.get(player, "block.easysuppressions.portal_cutter_block"));
+		List<Text> lore = new java.util.ArrayList<>();
+		message(lore, draft);
+		lore.add(white(EsLang.get(player, "easysuppressions.gui.status",
 				EsLang.get(player, be.isActive() ? "easysuppressions.gui.cutter_active" : "easysuppressions.gui.cutter_inactive"))));
-		body.add(line(zoneLine(player, be.getZone())));
-		body.add(gray(EsLang.get(player, "easysuppressions.gui.cutter_hint")));
-		body.add(gray(EsLang.get(player, "easysuppressions.vanilla.selector_hint")));
-
-		List<DialogInput> inputs = cornerInputs(player, be, draft);
-		List<DialogActionButtonData> buttons = new ArrayList<>();
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.save_zone"), dynamic(be.getPos(), "save_zone")));
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.import"), dynamic(be.getPos(), "import")));
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.show_zone"), dynamic(be.getPos(), "show")));
-		return multi(EsLang.get(player, "block.easysuppressions.portal_cutter_block"), body, inputs, buttons, player);
+		lore.add(white(zoneLine(player, be.getZone())));
+		lore.add(gray(EsLang.get(player, "easysuppressions.gui.cutter_hint")));
+		lore.add(gray(EsLang.get(player, "easysuppressions.vanilla.selector_hint")));
+		gui.setSlot(4, info(Items.PURPLE_GLAZED_TERRACOTTA, Text.literal(EsLang.get(player, "block.easysuppressions.portal_cutter_block")), lore));
+		cornerButtons(gui, player, be, draft, 10, 11);
+		gui.setSlot(13, button(Items.LIME_CONCRETE, EsLang.get(player, "easysuppressions.gui.save_zone"), List.of(), () -> act(player, pos, "save_zone")));
+		gui.setSlot(14, button(Items.AMETHYST_SHARD, EsLang.get(player, "easysuppressions.gui.import"), List.of(), () -> act(player, pos, "import")));
+		gui.setSlot(16, button(Items.ENDER_EYE, EsLang.get(player, "easysuppressions.gui.show_zone"), List.of(), () -> {
+			gui.close();
+			act(player, pos, "show");
+		}));
+		gui.setSlot(22, button(Items.BARRIER, EsLang.get(player, "easysuppressions.vanilla.close"), List.of(), gui::close));
+		gui.open();
 	}
 
-	private static Dialog suppressor(ServerPlayerEntity player, LightSuppressorBlockEntity be, Draft draft) {
+	private static void suppressor(ServerPlayerEntity player, LightSuppressorBlockEntity be, Draft draft) {
+		BlockPos pos = be.getPos();
 		boolean locked = be.isLocked();
-		List<DialogBody> body = new ArrayList<>();
-		message(player, body, draft);
-		body.add(line(EsLang.get(player, "easysuppressions.gui.status",
+		List<Text> lore = new java.util.ArrayList<>();
+		message(lore, draft);
+		lore.add(white(EsLang.get(player, "easysuppressions.gui.status",
 				EsLang.get(player, locked ? "easysuppressions.gui.locked" : "easysuppressions.gui.unlocked"))));
-		body.add(line(zoneLine(player, be.getZone())));
+		lore.add(white(zoneLine(player, be.getZone())));
 		Payloads.ScreenData data = ServerNet.screenData(be);
 		long pending = data.total() - data.recorded();
 		if (locked && pending > 0) {
-			body.add(line(EsLang.get(player, "easysuppressions.gui.pending", pending, data.total())));
+			lore.add(white(EsLang.get(player, "easysuppressions.gui.pending", pending, data.total())));
 			LongList nearest = data.nearestPending();
 			if (!nearest.isEmpty()) {
 				StringBuilder list = new StringBuilder(EsLang.get(player, "easysuppressions.gui.pending_nearest"));
@@ -133,50 +126,99 @@ public final class VanillaScreens {
 					long key = nearest.getLong(i);
 					list.append(i == 0 ? " " : ", ").append(ChunkPos.getPackedX(key)).append(" ").append(ChunkPos.getPackedZ(key));
 				}
-				body.add(gray(list.toString()));
+				lore.add(gray(list.toString()));
 			}
 		}
+		String title = EsLang.get(player, "block.easysuppressions.light_suppressor_block");
 		if (locked) {
 			LightSettings s = be.getSettings();
-			body.add(line(EsLang.get(player, "easysuppressions.gui.sky_light") + ": " + describe(player, s.sky())
+			lore.add(white(EsLang.get(player, "easysuppressions.gui.sky_light") + ": " + describe(player, s.sky())
 					+ "   " + EsLang.get(player, "easysuppressions.gui.block_light") + ": " + describe(player, s.block())));
-			body.add(gray(EsLang.get(player, "easysuppressions.gui.locked_hint")));
-			List<DialogActionButtonData> buttons = new ArrayList<>();
-			buttons.add(button(EsLang.get(player, "easysuppressions.gui.unlock"), simple(be.getPos(), "unlock_ask")));
-			buttons.add(button(EsLang.get(player, "easysuppressions.gui.show_zone"), simple(be.getPos(), "show")));
-			return multi(EsLang.get(player, "block.easysuppressions.light_suppressor_block"), body, List.of(), buttons, player);
+			lore.add(gray(EsLang.get(player, "easysuppressions.gui.locked_hint")));
+			SimpleGui gui = chest(player, 3, title);
+			gui.setSlot(4, info(Items.ORANGE_GLAZED_TERRACOTTA, Text.literal(title), lore));
+			gui.setSlot(11, button(Items.TRIPWIRE_HOOK, EsLang.get(player, "easysuppressions.gui.unlock"), List.of(), () -> act(player, pos, "unlock_ask")));
+			gui.setSlot(15, button(Items.ENDER_EYE, EsLang.get(player, "easysuppressions.gui.show_zone"), List.of(), () -> {
+				gui.close();
+				act(player, pos, "show");
+			}));
+			gui.setSlot(22, button(Items.BARRIER, EsLang.get(player, "easysuppressions.vanilla.close"), List.of(), gui::close));
+			gui.open();
+			return;
 		}
-		body.add(gray(EsLang.get(player, "easysuppressions.gui.suppressor_hint")));
-		body.add(gray(EsLang.get(player, "easysuppressions.vanilla.selector_hint")));
-
+		lore.add(gray(EsLang.get(player, "easysuppressions.gui.suppressor_hint")));
+		lore.add(gray(EsLang.get(player, "easysuppressions.vanilla.selector_hint")));
 		LightSettings settings = draft.settings != null ? draft.settings : be.getSettings();
-		List<DialogInput> inputs = new ArrayList<>(cornerInputs(player, be, draft));
-		inputs.add(new DialogInput("sky_mode", modeInput(player, "easysuppressions.gui.sky_light", settings.sky().mode())));
-		inputs.add(new DialogInput("sky_value", valueInput(player, "easysuppressions.gui.sky_light", settings.sky().value())));
-		inputs.add(new DialogInput("block_mode", modeInput(player, "easysuppressions.gui.block_light", settings.block().mode())));
-		inputs.add(new DialogInput("block_value", valueInput(player, "easysuppressions.gui.block_light", settings.block().value())));
-
-		List<DialogActionButtonData> buttons = new ArrayList<>();
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.save_zone"), dynamic(be.getPos(), "save_zone")));
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.save_settings"), dynamic(be.getPos(), "save_settings")));
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.import"), dynamic(be.getPos(), "import")));
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.lock"), dynamic(be.getPos(), "lock_ask")));
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.preset_simple"), dynamic(be.getPos(), "preset_simple")));
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.preset_mob_farm"), dynamic(be.getPos(), "preset_mob_farm")));
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.preset_no_spawn"), dynamic(be.getPos(), "preset_no_spawn")));
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.preset_sky_only"), dynamic(be.getPos(), "preset_sky_only")));
-		buttons.add(button(EsLang.get(player, "easysuppressions.gui.show_zone"), dynamic(be.getPos(), "show")));
-		return multi(EsLang.get(player, "block.easysuppressions.light_suppressor_block"), body, inputs, buttons, player);
+		SimpleGui gui = chest(player, 6, title);
+		gui.setSlot(4, info(Items.ORANGE_GLAZED_TERRACOTTA, Text.literal(title), lore));
+		cornerButtons(gui, player, be, draft, 10, 11);
+		gui.setSlot(13, button(Items.LIME_CONCRETE, EsLang.get(player, "easysuppressions.gui.save_zone"), List.of(), () -> act(player, pos, "save_zone")));
+		gui.setSlot(14, button(Items.BLAZE_ROD, EsLang.get(player, "easysuppressions.gui.import"), List.of(), () -> act(player, pos, "import")));
+		gui.setSlot(16, button(Items.ENDER_EYE, EsLang.get(player, "easysuppressions.gui.show_zone"), List.of(), () -> {
+			gui.close();
+			act(player, pos, "show");
+		}));
+		channelButtons(gui, player, be, draft, settings, true, 28);
+		channelButtons(gui, player, be, draft, settings, false, 32);
+		gui.setSlot(37, button(Items.LIME_CONCRETE, EsLang.get(player, "easysuppressions.gui.save_settings"), List.of(), () -> act(player, pos, "save_settings")));
+		gui.setSlot(39, button(Items.LIGHT_BLUE_DYE, EsLang.get(player, "easysuppressions.gui.preset_simple"), List.of(), () -> act(player, pos, "preset_simple")));
+		gui.setSlot(40, button(Items.ZOMBIE_HEAD, EsLang.get(player, "easysuppressions.gui.preset_mob_farm"), List.of(), () -> act(player, pos, "preset_mob_farm")));
+		gui.setSlot(41, button(Items.TORCH, EsLang.get(player, "easysuppressions.gui.preset_no_spawn"), List.of(), () -> act(player, pos, "preset_no_spawn")));
+		gui.setSlot(42, button(Items.DAYLIGHT_DETECTOR, EsLang.get(player, "easysuppressions.gui.preset_sky_only"), List.of(), () -> act(player, pos, "preset_sky_only")));
+		gui.setSlot(43, button(Items.IRON_BARS, EsLang.get(player, "easysuppressions.gui.lock"), List.of(), () -> act(player, pos, "lock_ask")));
+		gui.setSlot(49, button(Items.BARRIER, EsLang.get(player, "easysuppressions.vanilla.close"), List.of(), gui::close));
+		gui.open();
 	}
 
-	private static Dialog confirm(ServerPlayerEntity player, String title, String question, NbtCompound yes, BlockPos pos) {
-		DialogCommonData common = new DialogCommonData(Text.literal(title), Optional.empty(), true, false, AfterAction.CLOSE,
-				List.of(line(question)), List.of());
-		return new ConfirmationDialog(common,
-				new DialogActionButtonData(new DialogButtonData(Text.literal(EsLang.get(player, "easysuppressions.vanilla.yes")).formatted(Formatting.RED), 150),
-						Optional.of(custom(yes))),
-				new DialogActionButtonData(new DialogButtonData(Text.literal(EsLang.get(player, "easysuppressions.vanilla.cancel")), 150),
-						Optional.of(simple(pos, "reopen"))));
+	/** Mode (click to switch) and, for a fixed value, minus / value / plus */
+	private static void channelButtons(SimpleGui gui, ServerPlayerEntity player, LightSuppressorBlockEntity be, Draft draft, LightSettings settings,
+									   boolean sky, int slot) {
+		ChannelSetting channel = sky ? settings.sky() : settings.block();
+		String label = EsLang.get(player, sky ? "easysuppressions.gui.sky_light" : "easysuppressions.gui.block_light");
+		ChannelMode next = ChannelMode.values()[(channel.mode().ordinal() + 1) % ChannelMode.values().length];
+		gui.setSlot(slot, button(sky ? Items.SUNFLOWER : Items.GLOWSTONE, label + ": " + describe(player, channel),
+				List.of(EsLang.get(player, "easysuppressions.vanilla.click_mode", EsLang.get(player, next.translationKey()))),
+				() -> setChannel(player, be, draft, settings, sky, new ChannelSetting(next, channel.value()))));
+		if (channel.mode() != ChannelMode.FIXED) return;
+		gui.setSlot(slot + 1, button(Items.RED_STAINED_GLASS_PANE, "- 1", List.of(), () -> setChannel(player, be, draft, settings, sky,
+				new ChannelSetting(ChannelMode.FIXED, Math.max(0, channel.value() - 1)))));
+		gui.setSlot(slot + 2, info(Items.LIGHT, Text.literal(label + " = " + channel.value()), List.of()).setCount(Math.max(1, channel.value())));
+		gui.setSlot(slot + 3, button(Items.LIME_STAINED_GLASS_PANE, "+ 1", List.of(), () -> setChannel(player, be, draft, settings, sky,
+				new ChannelSetting(ChannelMode.FIXED, Math.min(15, channel.value() + 1)))));
+	}
+
+	private static void setChannel(ServerPlayerEntity player, LightSuppressorBlockEntity be, Draft draft, LightSettings settings, boolean sky, ChannelSetting channel) {
+		LightSettings edited = sky ? new LightSettings(channel, settings.block()) : new LightSettings(settings.sky(), channel);
+		DRAFTS.put(player.getUuid(), new Draft(draft.pos, draft.corner1, draft.corner2, edited, null, false));
+		open(player, be);
+	}
+
+	private static void cornerButtons(SimpleGui gui, ServerPlayerEntity player, SuppressionBlockEntity be, Draft draft, int slot1, int slot2) {
+		String[] corners = corners(player, be, draft);
+		for (int i = 0; i < 2; i++) {
+			int n = i + 1;
+			String current = corners[i];
+			gui.setSlot(i == 0 ? slot1 : slot2, button(i == 0 ? Items.RED_BANNER : Items.BLUE_BANNER, EsLang.get(player, "easysuppressions.vanilla.corner_input", n) + ": " + current,
+					List.of(EsLang.get(player, "easysuppressions.vanilla.click_type")), () -> type(player, EsLang.get(player, "easysuppressions.vanilla.corner_input", n), current, text -> {
+						Draft d = draft(player, be.getPos());
+						String[] now = corners(player, be, d);
+						DRAFTS.put(player.getUuid(), new Draft(d.pos, n == 1 ? text : now[0], n == 2 ? text : now[1], d.settings, null, false));
+						open(player, be);
+					}, () -> open(player, be))));
+		}
+	}
+
+	private static void confirm(ServerPlayerEntity player, String title, String question, NbtCompound yes, BlockPos pos) {
+		SimpleGui gui = chest(player, 3, title);
+		gui.setSlot(4, info(Items.PAPER, Text.literal(question), List.of()));
+		gui.setSlot(11, button(Items.LIME_CONCRETE, EsLang.get(player, "easysuppressions.vanilla.yes"), List.of(question), () -> handle(player, Optional.of(yes))));
+		gui.setSlot(15, button(Items.RED_CONCRETE, EsLang.get(player, "easysuppressions.vanilla.cancel"), List.of(), () -> act(player, pos, "reopen")));
+		gui.open();
+	}
+
+	/** A button's action, carried out like the mod's screen action of the same name */
+	private static void act(ServerPlayerEntity player, BlockPos pos, String op) {
+		handle(player, Optional.of(base(pos, op)));
 	}
 
 	// ------------------------------------------------------------------ actions
@@ -193,7 +235,7 @@ public final class VanillaScreens {
 		}
 		String op = nbt.getString("op", "");
 		Draft draft = draft(player, pos);
-		// keep what was typed: the dialog opens again with it after the action
+		// keep what was typed: the screen opens again with it after the action
 		if (nbt.contains("corner1")) {
 			LightSettings typed = be instanceof LightSuppressorBlockEntity && nbt.contains("sky_mode") ? settings(nbt) : draft.settings;
 			draft = new Draft(draft.pos, nbt.getString("corner1", ""), nbt.getString("corner2", ""), typed, null, false);
@@ -240,9 +282,9 @@ public final class VanillaScreens {
 				NbtCompound yes = base(pos, "lock");
 				yes.putIntArray("zone", new int[]{zone.minX(), zone.minY(), zone.minZ(), zone.maxX(), zone.maxY(), zone.maxZ()});
 				putSettings(yes, edited);
-				player.openDialog(RegistryEntry.of(confirm(player, EsLang.get(player, "easysuppressions.gui.confirm_lock_title"),
+				confirm(player, EsLang.get(player, "easysuppressions.gui.confirm_lock_title"),
 						EsLang.get(player, "easysuppressions.gui.confirm_lock", zone.describe(), describe(player, edited.sky()), describe(player, edited.block())),
-						yes, pos)));
+						yes, pos);
 			}
 			case "lock" -> {
 				int[] z = nbt.getIntArray("zone").orElse(new int[0]);
@@ -253,8 +295,8 @@ public final class VanillaScreens {
 				ServerNet.handleAction(player, new Payloads.ScreenAction(pos, Payloads.Action.LOCK,
 						Optional.of(new Zone(z[0], z[1], z[2], z[3], z[4], z[5])), settings(nbt)));
 			}
-			case "unlock_ask" -> player.openDialog(RegistryEntry.of(confirm(player, EsLang.get(player, "easysuppressions.gui.confirm_unlock_title"),
-					EsLang.get(player, "easysuppressions.gui.confirm_unlock"), base(pos, "unlock"), pos)));
+			case "unlock_ask" -> confirm(player, EsLang.get(player, "easysuppressions.gui.confirm_unlock_title"),
+					EsLang.get(player, "easysuppressions.gui.confirm_unlock"), base(pos, "unlock"), pos);
 			case "unlock" -> {
 				DRAFTS.remove(player.getUuid());
 				ServerNet.handleAction(player, new Payloads.ScreenAction(pos, Payloads.Action.UNLOCK, Optional.empty(), edited));
@@ -269,7 +311,7 @@ public final class VanillaScreens {
 					open(player, be);
 					return;
 				}
-				// the dialog closes so the zone can be seen
+				// the screen closed so the zone can be seen
 				VanillaZones.show(player, zone, be.kind(), 20 * 15);
 				player.sendMessage(Text.literal(EsLang.get(player, "easysuppressions.vanilla.zone_shown")).formatted(Formatting.AQUA), true);
 			}
@@ -359,7 +401,8 @@ public final class VanillaScreens {
 
 	// ------------------------------------------------------------------ pieces
 
-	private static List<DialogInput> cornerInputs(ServerPlayerEntity player, SuppressionBlockEntity be, Draft draft) {
+	/** The two corners shown: what was typed, else the zone, else the held selector's selection, else the block */
+	private static String[] corners(ServerPlayerEntity player, SuppressionBlockEntity be, Draft draft) {
 		String c1 = draft.corner1;
 		String c2 = draft.corner2;
 		if (c1 == null || c2 == null) {
@@ -377,9 +420,7 @@ public final class VanillaScreens {
 				c2 = xyz(be.getPos());
 			}
 		}
-		return List.of(
-				new DialogInput("corner1", new TextInputControl(200, Text.literal(EsLang.get(player, "easysuppressions.vanilla.corner_input", 1)), true, c1, 64, Optional.empty())),
-				new DialogInput("corner2", new TextInputControl(200, Text.literal(EsLang.get(player, "easysuppressions.vanilla.corner_input", 2)), true, c2, 64, Optional.empty())));
+		return new String[]{c1, c2};
 	}
 
 	@Nullable
@@ -393,19 +434,6 @@ public final class VanillaScreens {
 		return null;
 	}
 
-	private static SingleOptionInputControl modeInput(ServerPlayerEntity player, String labelKey, ChannelMode current) {
-		List<SingleOptionInputControl.Entry> entries = new ArrayList<>();
-		for (ChannelMode mode : ChannelMode.values()) {
-			entries.add(new SingleOptionInputControl.Entry(mode.asString(), Optional.of(Text.literal(EsLang.get(player, mode.translationKey()))), mode == current));
-		}
-		return new SingleOptionInputControl(200, entries, Text.literal(EsLang.get(player, labelKey)), true);
-	}
-
-	private static NumberRangeInputControl valueInput(ServerPlayerEntity player, String labelKey, int current) {
-		return new NumberRangeInputControl(200, Text.literal(EsLang.get(player, labelKey) + " · " + EsLang.get(player, "easysuppressions.vanilla.fixed_value")),
-				"options.generic_value", new NumberRangeInputControl.RangeInfo(0, 15, Optional.of((float) current), Optional.of(1.0F)));
-	}
-
 	private static String describe(ServerPlayerEntity player, ChannelSetting setting) {
 		String text = EsLang.get(player, setting.mode().translationKey());
 		return setting.mode() == ChannelMode.FIXED ? text + " " + setting.value() : text;
@@ -417,9 +445,9 @@ public final class VanillaScreens {
 				+ EsLang.get(player, "easysuppressions.tooltip.size", zone.sizeX(), zone.sizeY(), zone.sizeZ());
 	}
 
-	private static void message(ServerPlayerEntity player, List<DialogBody> body, Draft draft) {
+	private static void message(List<Text> lore, Draft draft) {
 		if (draft.message != null) {
-			body.add(new PlainMessageDialogBody(draft.message.copy().formatted(draft.error ? Formatting.RED : Formatting.GREEN), WIDTH));
+			lore.add(draft.message.copy().formatted(draft.error ? Formatting.RED : Formatting.GREEN));
 		}
 	}
 
@@ -427,16 +455,12 @@ public final class VanillaScreens {
 		return p.getX() + " " + p.getY() + " " + p.getZ();
 	}
 
-	private static DialogBody line(String text) {
-		return new PlainMessageDialogBody(Text.literal(text), WIDTH);
+	private static Text white(String text) {
+		return Text.literal(text).formatted(Formatting.WHITE);
 	}
 
-	private static DialogBody gray(String text) {
-		return new PlainMessageDialogBody(Text.literal(text).formatted(Formatting.GRAY), WIDTH);
-	}
-
-	private static DialogActionButtonData button(String label, DialogAction action) {
-		return new DialogActionButtonData(new DialogButtonData(Text.literal(label), 150), Optional.of(action));
+	private static Text gray(String text) {
+		return Text.literal(text).formatted(Formatting.GRAY);
 	}
 
 	private static NbtCompound base(BlockPos pos, String op) {
@@ -448,23 +472,34 @@ public final class VanillaScreens {
 		return nbt;
 	}
 
-	/** Sends the typed values along. */
-	private static DialogAction dynamic(BlockPos pos, String op) {
-		return new DynamicCustomDialogAction(ACTION, Optional.of(base(pos, op)));
+	private static SimpleGui chest(ServerPlayerEntity player, int rows, String title) {
+		SimpleGui gui = new SimpleGui(rows == 6 ? ScreenHandlerType.GENERIC_9X6 : ScreenHandlerType.GENERIC_9X3, player, false);
+		gui.setTitle(Text.literal(title));
+		return gui;
 	}
 
-	private static DialogAction simple(BlockPos pos, String op) {
-		return custom(base(pos, op));
+	/** An item with a name and lore lines (each line split at line breaks, the line's colour kept) */
+	private static GuiElementBuilder info(Item item, Text name, List<Text> lore) {
+		GuiElementBuilder b = new GuiElementBuilder(item).setName(name.copy().styled(s -> s.withItalic(false).withColor(Formatting.WHITE))).hideDefaultTooltip();
+		for (Text line : lore) {
+			for (String part : line.getString().split("\n")) b.addLoreLine(Text.literal(part).setStyle(line.getStyle().withItalic(false)));
+		}
+		return b;
 	}
 
-	private static SimpleDialogAction custom(NbtCompound payload) {
-		return new SimpleDialogAction(new ClickEvent.Custom(ACTION, Optional.of(payload)));
+	private static GuiElementBuilder button(Item item, String name, List<String> lore, Runnable click) {
+		return info(item, Text.literal(name), lore.stream().map(VanillaScreens::gray).toList()).setCallback((index, type, action) -> {
+			if (type == ClickType.MOUSE_LEFT || type == ClickType.MOUSE_RIGHT || type == ClickType.MOUSE_LEFT_SHIFT || type == ClickType.MOUSE_RIGHT_SHIFT) click.run();
+		});
 	}
 
-	private static Dialog multi(String title, List<DialogBody> body, List<DialogInput> inputs, List<DialogActionButtonData> buttons, ServerPlayerEntity player) {
-		DialogCommonData common = new DialogCommonData(Text.literal(title), Optional.empty(), true, false, AfterAction.CLOSE, body, inputs);
-		Optional<DialogActionButtonData> exit = Optional.of(new DialogActionButtonData(
-				new DialogButtonData(Text.literal(EsLang.get(player, "easysuppressions.vanilla.close")), 150), Optional.empty()));
-		return new MultiActionDialog(common, buttons, exit, 2);
+	/** Typing a corner: an anvil with the current text; the result slot accepts */
+	private static void type(ServerPlayerEntity player, String title, String current, java.util.function.Consumer<String> done, Runnable cancel) {
+		AnvilInputGui gui = new AnvilInputGui(player, false);
+		gui.setTitle(Text.literal(title));
+		gui.setDefaultInputValue(current);
+		gui.setSlot(1, button(Items.RED_CONCRETE, EsLang.get(player, "easysuppressions.vanilla.cancel"), List.of(), cancel));
+		gui.setSlot(2, button(Items.LIME_CONCRETE, EsLang.get(player, "easysuppressions.vanilla.yes"), List.of(), () -> done.accept(gui.getInput())));
+		gui.open();
 	}
 }

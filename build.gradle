@@ -64,6 +64,9 @@ dependencies {
 	include "eu.pb4:polymer-reg-sync-manipulator:${project.polymer_version}"
 	include "xyz.nucleoid:packet-tweaker:${project.packet_tweaker_version}"
 
+	// sgui (LGPL-3.0): the chest screens of players without the mod; bundled
+	modImplementation include("eu.pb4:sgui:${project.sgui_version}")
+
 	// Optional for players: a settings button in the mod list.
 	modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
 	modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"

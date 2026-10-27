@@ -39,7 +39,7 @@ Minecraft Java 1.21.11 · Fabric · server (client optional)<br>
 原版客户端（包括没装 Fabric 的）也能进服、用这两种方块：
 
 - 方块和物品显示成原版的替身：切门方块是紫色带釉陶瓦，光抑方块是橙色带釉陶瓦，选区器是紫水晶碎片 / 烈焰棒，挖掘镐是金镐；名字和说明照常显示（中文或英文，跟着客户端语言）。
-- 右键方块打开服务器发来的对话框，功能和模组界面一样（输入坐标、导入选区器、光抑通道和预设、锁定 / 解除）。
+- 右键方块打开服务器发来的箱子界面，功能和模组界面一样：点物品按钮操作，坐标用铁砧输入，光抑通道点一下切换模式、用 + / − 调数值，还有预设、导入选区器、锁定 / 解除。
 - 选区器：左键设点 1，右键设点 2；拿着选区器时，选区和附近的区域用粒子画出来。
 - 传送门挖掘镐照常能挖传送门（由服务端来挖）。
 - 光抑只改游戏判定，原版客户端画面上看到的还是真实光照。
@@ -112,7 +112,7 @@ Both blocks:
 Vanilla clients (even without Fabric) can join and use both blocks:
 
 - Blocks and items show as vanilla stand-ins: the Portal Cutter Block is purple glazed terracotta, the Light Suppressor Block orange glazed terracotta, the selectors an amethyst shard / blaze rod, the pickaxe a golden pickaxe. Names and tooltips still show (Chinese or English, following the client's language).
-- Right click a block for a dialog sent by the server, with the same functions as the mod's GUI (typed corners, selector import, light channels and presets, lock / unlock).
+- Right click a block for a chest screen sent by the server, with the same functions as the mod's GUI: item buttons, corners typed in an anvil, light channels switched with a click and set with + / −, presets, selector import, lock / unlock.
 - Selectors: left click sets corner 1, right click corner 2; while one is held, the selection and nearby zones are drawn with particles.
 - The Portal Pickaxe mines portal blocks as usual (the server does the mining).
 - The light suppressor changes the game's light checks only; a vanilla client still draws the real light.
